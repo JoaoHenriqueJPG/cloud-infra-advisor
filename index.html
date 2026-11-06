@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cloud & Infra Advisor — Laudo de Prontidão para a Nuvem</title>
+<meta name="description" content="Diagnóstico de infraestrutura, riscos, conectividade e custos com Laudo Técnico de Prontidão e Migração para a Nuvem.">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script>
+tailwind.config = { theme: { extend: {
+  fontFamily: { display: ['Space Grotesk','sans-serif'], body: ['IBM Plex Sans','sans-serif'] },
+  colors: { ink:'#0b1324', sky:{450:'#38bdf8'}, cloud:'#e8f1fb' }
+}}};
+</script>
+<style>
+  body{font-family:'IBM Plex Sans',sans-serif}
+  .grid-bg{background-image:linear-gradient(rgba(56,189,248,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(56,189,248,.08) 1px,transparent 1px);background-size:32px 32px}
+  .opt input:checked + span{border-color:#0284c7;background:#e0f2fe;color:#075985;font-weight:600}
+  @media print{
+    .no-print{display:none!important}
+    body{background:#fff!important}
+    header{background:#0b1324!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .card{break-inside:avoid;box-shadow:none!important;border:1px solid #cbd5e1!important}
+    #results{display:block!important}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+</style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+<header class="bg-ink text-white grid-bg">
+  <div class="max-w-6xl mx-auto px-6 py-10 md:py-14">
+    <div class="flex items-center gap-3 text-sky-300 text-sm font-semibold tracking-widest uppercase">
+      <i data-lucide="cloud-cog" class="w-5 h-5"></i> Consultoria em Infraestrutura & Nuvem
+    </div>
+    <h1 class="font-display text-4xl md:text-6xl font-bold mt-3">Cloud & Infra Advisor</h1>
+    <p class="mt-4 max-w-2xl text-slate-300 text-lg">Diagnóstico de servidores locais, riscos de perda de dados, conectividade e custos — com Laudo Técnico de Prontidão e Migração para a Nuvem.</p>
+    <div class="mt-6 flex flex-wrap gap-3 no-print">
+      <button id="demoBtn" class="inline-flex items-center gap-2 bg-sky-400 text-ink font-semibold px-5 py-3 rounded-lg hover:bg-sky-300 transition"><i data-lucide="play-circle" class="w-5 h-5"></i>Carregar Caso Exemplo (Demo)</button>
+      <a href="#form" class="inline-flex items-center gap-2 border border-slate-500 px-5 py-3 rounded-lg hover:bg-white/10 transition"><i data-lucide="clipboard-list" class="w-5 h-5"></i>Iniciar diagnóstico</a>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-6xl mx-auto px-6 py-10 space-y-10">
+  <form id="form" class="card bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 no-print">
+    <h2 class="font-display text-2xl font-bold flex items-center gap-2"><i data-lucide="building-2" class="w-6 h-6 text-sky-600"></i>Dados da Empresa</h2>
+    <div class="grid md:grid-cols-4 gap-4 mt-5">
+      <label class="block"><span class="text-sm font-medium">Nome da Empresa</span><input required id="nome" class="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-sky-500" placeholder="Ex.: Acme Ltda"></label>
+      <label class="block"><span class="text-sm font-medium">Setor</span><select id="setor" class="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2">
+        <option>Indústria</option><option>Varejo</option><option>Saúde</option><option>Serviços</option><option>Educação</option><option>Financeiro</option><option>Logística</option><option>Outro</option></select></label>
+      <label class="block"><span class="text-sm font-medium">Porte</span><select id="porte" class="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2">
+        <option>Microempresa</option><option>Pequena</option><option>Média</option><option>Grande</option></select></label>
+      <label class="block"><span class="text-sm font-medium">Colaboradores</span><input required type="number" min="1" id="colab" class="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2" placeholder="Ex.: 80"></label>
+    </div>
+    <div id="questions" class="mt-8 space-y-8"></div>
+    <div class="mt-8 flex flex-wrap gap-3">
+      <button type="submit" class="inline-flex items-center gap-2 bg-ink text-white font-semibold px-6 py-3 rounded-lg hover:bg-slate-800"><i data-lucide="activity" class="w-5 h-5"></i>Gerar Diagnóstico</button>
+      <button type="reset" class="px-6 py-3 rounded-lg border border-slate-300 hover:bg-slate-100">Limpar</button>
+    </div>
+  </form>
+
+  <section id="results" class="hidden space-y-8">
+    <div class="card bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+      <div class="flex flex-wrap justify-between items-start gap-4">
+        <div>
+          <p class="text-xs uppercase tracking-widest text-sky-700 font-semibold">Laudo Técnico de Prontidão e Migração para a Nuvem</p>
+          <h2 id="rEmpresa" class="font-display text-3xl font-bold mt-1"></h2>
+          <p id="rMeta" class="text-slate-500 mt-1"></p>
+        </div>
+        <button id="printBtn" class="no-print inline-flex items-center gap-2 bg-sky-600 text-white font-semibold px-5 py-3 rounded-lg hover:bg-sky-700"><i data-lucide="printer" class="w-5 h-5"></i>Imprimir / Exportar Laudo em PDF</button>
+      </div>
+      <div class="grid md:grid-cols-3 gap-6 mt-8 items-center">
+        <div class="text-center">
+          <p class="text-sm text-slate-500">Score Geral de Prontidão em Nuvem</p>
+          <p id="rScore" class="font-display text-7xl font-bold text-ink mt-2">0%</p>
+          <span id="rBadge" class="inline-block mt-3 px-4 py-1.5 rounded-full text-sm font-semibold"></span>
+          <p id="rBadgeDesc" class="text-sm text-slate-500 mt-3"></p>
+        </div>
+        <div class="md:col-span-2 h-80"><canvas id="chart"></canvas></div>
+      </div>
+    </div>
+    <div id="pillarCards" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+    <div class="card bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+      <h3 class="font-display text-2xl font-bold flex items-center gap-2"><i data-lucide="list-checks" class="w-6 h-6 text-sky-600"></i>Plano de Boas Práticas e Migração</h3>
+      <div id="plan" class="mt-6 space-y-6"></div>
+    </div>
+  </section>
+</main>
+
+<footer class="border-t border-slate-200 bg-white">
+  <div class="max-w-6xl mx-auto px-6 py-6 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600">
+    <span class="inline-flex items-center gap-2 bg-emerald-50 text-emerald-800 border border-emerald-200 px-3 py-1.5 rounded-full font-medium"><i data-lucide="shield-check" class="w-4 h-4"></i>Privacy by Design (LGPD): Todos os cálculos e dados são processados localmente no seu navegador. Nenhuma informação é enviada a servidores.</span>
+    <span>© <span id="yr"></span> Cloud & Infra Advisor</span>
+  </div>
+</footer>
+
+<script>
+const PILLARS = [
+  { id:'infra', name:'Infraestrutura Atual & Servidores', icon:'server', qs:[
+    { q:'Qual a idade média dos servidores e equipamentos locais?', o:[['Mais de 7 anos / sem garantia',0],['5 a 7 anos',35],['2 a 4 anos',70],['Já usamos majoritariamente nuvem',100]] },
+    { q:'Qual o grau de dependência de infraestrutura física local (sala de servidores, ERP local)?', o:[['Total — tudo roda localmente',0],['Alta — sistemas críticos locais',35],['Parcial — modelo híbrido',70],['Mínima — sem servidores locais críticos',100]] } ]},
+  { id:'risk', name:'Riscos, Backup & Recuperação', icon:'database-backup', qs:[
+    { q:'Como funciona a política de backup?', o:[['Sem backup ou manual/esporádico',0],['Backup local apenas (HD/NAS)',35],['Local + cópia externa sem testes',70],['Regra 3-2-1 com cópia offsite/imutável e testes',100]] },
+    { q:'Existe Plano de Recuperação de Desastres (DR) com RTO/RPO definidos?', o:[['Não existe',0],['Informal, nunca testado',35],['Documentado, testado raramente',70],['Documentado e testado periodicamente',100]] } ]},
+  { id:'net', name:'Conectividade, Desempenho & Custos', icon:'network', qs:[
+    { q:'Como é a conectividade de internet?', o:[['Link único, instável',0],['Link único estável',35],['Link dedicado ou dois links',70],['Redundância com failover automático e SD-WAN',100]] },
+    { q:'Qual a previsibilidade dos custos de TI (TCO)?', o:[['Desconhecido — gastos emergenciais frequentes',0],['Parcialmente conhecido',35],['Orçamento anual controlado',70],['TCO medido, modelo OPEX e FinOps',100]] } ]},
+  { id:'sec', name:'Prontidão para Nuvem & Segurança', icon:'shield', qs:[
+    { q:'Qual a maturidade da equipe técnica em nuvem?', o:[['Sem equipe/conhecimento',0],['Conhecimento básico',35],['Equipe ou parceiro com experiência',70],['Equipe certificada / parceiro gerenciado (MSP)',100]] },
+    { q:'Quais controles de segurança estão implementados?', o:[['Apenas antivírus',0],['Firewall + antivírus',35],['MFA, firewall e políticas de acesso',70],['Zero Trust, MFA, EDR, criptografia e logs centralizados',100]] } ]},
+];
+
+const qWrap = document.getElementById('questions');
+PILLARS.forEach((p,pi)=>{
+  let html = `<fieldset><legend class="font-display text-lg font-bold flex items-center gap-2 text-ink"><span class="w-7 h-7 rounded-md bg-sky-100 text-sky-700 grid place-items-center text-sm">${pi+1}</span>${p.name}</legend><div class="mt-3 space-y-5">`;
+  p.qs.forEach((q,qi)=>{
+    html += `<div><p class="font-medium text-sm mb-2">${q.q}</p><div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-2">`;
+    q.o.forEach(([label,val],oi)=>{
+      html += `<label class="opt cursor-pointer"><input required class="sr-only" type="radio" name="${p.id}_${qi}" value="${val}"><span class="block h-full border border-slate-300 rounded-lg px-3 py-2 text-sm hover:border-sky-400 transition">${label} <em class="not-italic text-xs text-slate-400">(${val} pts)</em></span></label>`;
+    });
+    html += `</div></div>`;
+  });
+  qWrap.insertAdjacentHTML('beforeend', html + '</div></fieldset>');
+});
+
+const LEVELS = [
+  { min:0,  label:'Altamente On-Premise / Risco', cls:'bg-red-100 text-red-800', desc:'Alta exposição a perda de dados e obsolescência. Priorize backup e um plano de migração faseado.', bar:'#ef4444' },
+  { min:40, label:'Em Transição', cls:'bg-amber-100 text-amber-800', desc:'Fundamentos parciais. Ideal para iniciar migração lift-and-shift de cargas não críticas.', bar:'#f59e0b' },
+  { min:65, label:'Nuvem Híbrida Otimizada', cls:'bg-sky-100 text-sky-800', desc:'Boa maturidade. Foque em modernização (PaaS) e otimização de custos (FinOps).', bar:'#0ea5e9' },
+  { min:85, label:'Cloud Native / Líder', cls:'bg-emerald-100 text-emerald-800', desc:'Referência em maturidade. Mantenha governança, automação e melhoria contínua.', bar:'#10b981' },
+];
+const levelOf = s => [...LEVELS].reverse().find(l=>s>=l.min);
+
+const PLAN = {
+  infra:{ model:'IaaS → PaaS', low:['Inventariar servidores, licenças e aplicações (CMDB) e mapear dependências.','Migrar servidores legados sem garantia via lift-and-shift para VMs em nuvem (IaaS).','Substituir file servers locais por armazenamento SaaS (OneDrive/Google Drive/SharePoint).'], mid:['Consolidar cargas em VMs dimensionadas corretamente (right-sizing).','Avaliar migração de bancos de dados para serviços gerenciados (PaaS).'], high:['Modernizar aplicações com containers e serverless.','Adotar Infraestrutura como Código (Terraform/Bicep).'], strat:'Migração faseada (6R): começar por rehost de cargas não críticas, depois replatform dos sistemas centrais.' },
+  risk:{ model:'SaaS (Backup-as-a-Service / DRaaS)', low:['Implementar imediatamente a regra 3-2-1: 3 cópias, 2 mídias, 1 offsite.','Contratar Backup-as-a-Service com cópia imutável contra ransomware.','Definir RTO/RPO por sistema crítico.'], mid:['Documentar e testar o plano de DR ao menos semestralmente.','Automatizar alertas de falha de backup.'], high:['Adotar DR multirregião com failover automatizado.','Realizar simulações de restauração trimestrais.'], strat:'Antes de qualquer migração, garanta backup íntegro e testado — é a rede de segurança do projeto.' },
+  net:{ model:'IaaS + SaaS com FinOps', low:['Contratar segundo link de operadora distinta com failover.','Levantar o TCO atual (energia, hardware, manutenção, licenças, pessoas).','Migrar de CAPEX para OPEX com orçamento mensal previsível.'], mid:['Adotar SD-WAN para priorizar tráfego crítico.','Usar calculadoras de TCO dos provedores e instâncias reservadas.'], high:['Implantar práticas FinOps: tags, orçamentos e alertas de custo.','Avaliar CDN e conexões dedicadas (Direct Connect/ExpressRoute).'], strat:'Otimize custos com right-sizing, instâncias reservadas/savings plans e desligamento automático de ambientes ociosos.' },
+  sec:{ model:'SaaS + PaaS gerenciado', low:['Ativar MFA para todos os usuários e contas administrativas.','Capacitar a equipe ou contratar um parceiro MSP de nuvem.','Adequar tratamento de dados pessoais à LGPD (mapeamento e bases legais).'], mid:['Implementar gestão de identidades centralizada (SSO/IAM) e privilégio mínimo.','Adotar EDR e criptografia de dados em repouso e em trânsito.'], high:['Evoluir para arquitetura Zero Trust.','Centralizar logs em SIEM e aplicar políticas de conformidade contínua.'], strat:'Aplicar o modelo de responsabilidade compartilhada e uma landing zone segura antes de migrar cargas produtivas.' },
+};
+
+let chart;
+function render(data){
+  const scores = PILLARS.map(p=>Math.round((+data[p.id+'_0'] + +data[p.id+'_1'])/2));
+  const total = Math.round(scores.reduce((a,b)=>a+b,0)/4);
+  const lv = levelOf(total);
+  document.getElementById('rEmpresa').textContent = data.nome;
+  document.getElementById('rMeta').textContent = `${data.setor} · ${data.porte} · ${data.colab} colaboradores · Emitido em ${new Date().toLocaleDateString('pt-BR')}`;
+  document.getElementById('rScore').textContent = total + '%';
+  const b = document.getElementById('rBadge'); b.textContent = lv.label; b.className = 'inline-block mt-3 px-4 py-1.5 rounded-full text-sm font-semibold ' + lv.cls;
+  document.getElementById('rBadgeDesc').textContent = lv.desc;
+
+  document.getElementById('pillarCards').innerHTML = PILLARS.map((p,i)=>{ const l=levelOf(scores[i]); return `
+    <div class="card bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+      <div class="flex items-center gap-2 text-sm font-semibold text-slate-600"><i data-lucide="${p.icon}" class="w-4 h-4 text-sky-600"></i>${p.name}</div>
+      <p class="font-display text-4xl font-bold mt-3">${scores[i]}%</p>
+      <div class="h-2 bg-slate-100 rounded-full mt-3"><div class="h-2 rounded-full" style="width:${scores[i]}%;background:${l.bar}"></div></div>
+      <p class="text-xs mt-2 font-medium" style="color:${l.bar}">${l.label}</p>
+    </div>`; }).join('');
+
+  document.getElementById('plan').innerHTML = PILLARS.map((p,i)=>{
+    const s=scores[i], pl=PLAN[p.id]; const items = s<40?pl.low.concat(pl.mid):s<75?pl.mid.concat(pl.high.slice(0,1)):pl.high;
+    const prio = s<40?['Prioridade Alta','bg-red-100 text-red-800']:s<75?['Prioridade Média','bg-amber-100 text-amber-800']:['Manutenção','bg-emerald-100 text-emerald-800'];
+    return `<div class="card border border-slate-200 rounded-xl p-5">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <h4 class="font-display text-lg font-bold flex items-center gap-2"><i data-lucide="${p.icon}" class="w-5 h-5 text-sky-600"></i>${p.name} — ${s}%</h4>
+        <div class="flex gap-2"><span class="px-3 py-1 rounded-full text-xs font-semibold ${prio[1]}">${prio[0]}</span><span class="px-3 py-1 rounded-full text-xs font-semibold bg-ink text-white">Modelo ideal: ${pl.model}</span></div>
+      </div>
+      <ul class="mt-4 space-y-2">${items.map(t=>`<li class="flex gap-2 text-sm"><input type="checkbox" class="mt-1 accent-sky-600"><span>${t}</span></li>`).join('')}</ul>
+      <p class="mt-4 text-sm bg-sky-50 border-l-4 border-sky-500 p-3 rounded"><strong>Estratégia de migração & custos:</strong> ${pl.strat}</p>
+    </div>`; }).join('');
+
+  const sec = document.getElementById('results'); sec.classList.remove('hidden');
+  if(chart) chart.destroy();
+  chart = new Chart(document.getElementById('chart'), { type:'radar',
+    data:{ labels:['Infraestrutura','Backup & DR','Conectividade & Custos','Nuvem & Segurança'],
+      datasets:[{ label:data.nome, data:scores, backgroundColor:'rgba(14,165,233,.2)', borderColor:'#0284c7', pointBackgroundColor:'#0284c7', borderWidth:2 },
+                { label:'Referência Cloud Native', data:[85,85,85,85], backgroundColor:'rgba(16,185,129,.05)', borderColor:'#10b981', borderDash:[5,5], pointRadius:0, borderWidth:1.5 }]},
+    options:{ maintainAspectRatio:false, animation:{duration:600}, scales:{ r:{ min:0, max:100, ticks:{stepSize:25, backdropColor:'transparent'} } } } });
+  lucide.createIcons();
+  sec.scrollIntoView({behavior:'smooth'});
+}
+
+const form = document.getElementById('form');
+form.addEventListener('submit', e=>{ e.preventDefault(); const fd=new FormData(form); const d=Object.fromEntries(fd);
+  Object.assign(d,{ nome:nome.value.trim(), setor:setor.value, porte:porte.value, colab:colab.value }); render(d); });
+
+document.getElementById('demoBtn').addEventListener('click', ()=>{
+  nome.value='Metalúrgica Horizonte Ltda'; setor.value='Indústria'; porte.value='Média'; colab.value=120;
+  const demo={infra_0:0,infra_1:35,risk_0:35,risk_1:0,net_0:35,net_1:35,sec_0:35,sec_1:70};
+  Object.entries(demo).forEach(([k,v])=>{ form.querySelector(`input[name="${k}"][value="${v}"]`).checked=true; });
+  form.requestSubmit();
+});
+document.getElementById('printBtn').addEventListener('click', ()=>window.print());
+window.addEventListener('beforeprint', ()=>chart && chart.resize());
+document.getElementById('yr').textContent = new Date().getFullYear();
+lucide.createIcons();
+</script>
+</body>
+</html>
