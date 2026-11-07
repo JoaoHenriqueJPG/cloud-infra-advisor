@@ -1,5 +1,5 @@
 🚀 Cloud & Infra Advisor — Consultoria em Transformação Digital
-🔗 Acesse o Aplicativo Online (GitHub Pages): Clique aqui para abrir o App(https://github.com/JoaoHenriqueJPG/cloud-infra-advisor/)
+🔗 Acesse o Aplicativo Online (GitHub Pages): Clique aqui para abrir o App(https://joaohenriquejpg.github.io/cloud-infra-advisor/)
 
 👥 Especialistas Responsáveis (Autores)
 João Henrique Marchetto Vieira
